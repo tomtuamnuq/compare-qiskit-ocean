@@ -10,6 +10,8 @@ The views expressed are those of the author, and do not reflect the official pol
 
 I acknowledge the work of Yonghae Lee, Jaewoo Joo & Soojoon Lee under the Creative
 Commons License: http://creativecommons.org/licenses/by/4.0/
+I used the paper "Hybrid quantum linear equation algorithm and its experimental test on IBM Quantum Experience" 
+to derive the circuits for HHL Algorithm tests.
 
 
 I acknowledge the work of M. Rogers and R. Singleton Jr. in the paper "Floating-Point Calculations on a Quantum Annealer: Division and Matrix Inversion".

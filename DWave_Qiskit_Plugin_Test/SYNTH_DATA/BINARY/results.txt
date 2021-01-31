@@ -1,0 +1,83 @@
+Start Tests 
+ 
+
+ ------------------------------------- 
+test_bin_1
+Leap Hybrid
+ found solution!
+DWaveClique
+ found solution!
+DWaveSampler
+ found solution!
+ ------------------------------------- 
+test_bin_2
+Leap Hybrid
+ found solution!
+DWaveClique
+ found solution!
+DWaveSampler
+ found solution!
+ ------------------------------------- 
+test_bin_3
+Leap Hybrid
+ found solution!
+DWaveClique
+ found solution!
+DWaveSampler
+ found solution!
+ ------------------------------------- 
+test_bin_4
+Leap Hybrid
+ found solution!
+DWaveClique
+ found solution!
+DWaveSampler
+ found solution!
+ ------------------------------------- 
+test_bin_5
+Leap Hybrid
+ found solution!
+DWaveClique
+OptimizationResultStatus.INFEASIBLE
+DWaveSampler
+OptimizationResultStatus.INFEASIBLE
+ ------------------------------------- 
+test_bin_6
+Leap Hybrid
+ found solution!
+DWaveClique
+ found solution!
+DWaveSampler
+ found solution!
+ ------------------------------------- 
+test_bin_7
+Leap Hybrid
+ found solution!
+DWaveClique
+OptimizationResultStatus.INFEASIBLE
+DWaveSampler
+ found solution!
+ ------------------------------------- 
+test_bin_8
+Leap Hybrid
+ found solution!
+DWaveClique
+OptimizationResultStatus.INFEASIBLE
+DWaveSampler
+ found solution!
+ ------------------------------------- 
+test_bin_9
+Leap Hybrid
+ found solution!
+DWaveClique
+ found solution!
+DWaveSampler
+ found solution!
+ ------------------------------------- 
+test_bin_10
+Leap Hybrid
+ found solution!
+DWaveClique
+OptimizationResultStatus.INFEASIBLE
+DWaveSampler
+ found solution!

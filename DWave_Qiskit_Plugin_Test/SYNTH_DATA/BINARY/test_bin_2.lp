@@ -3,12 +3,12 @@
 \Problem name: test_bin_2
 
 Minimize
- obj: x0
+ obj:
 Subject To
- A0leb0: - 2 x0 + 7 x1 <= 2
- A1leb1: 4 x0 - x1 <= 0
- A2leb2: 7 x0 + 6 x1 <= 0
- A3leb3: 2 x0 - 6 x1 <= 1
+ A0leb0: 8 x0 - 8 x1 <= 1
+ A1leb1: x0 - 5 x1 <= 2
+ A2leb2: 5 x0 - 3 x1 <= 1
+ A3leb3: - 3 x0 + x1 <= 2
 
 Bounds
  0 <= x0 <= 1

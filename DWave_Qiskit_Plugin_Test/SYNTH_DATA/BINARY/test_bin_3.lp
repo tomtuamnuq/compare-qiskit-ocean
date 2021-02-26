@@ -3,14 +3,14 @@
 \Problem name: test_bin_3
 
 Minimize
- obj: - x0
+ obj: x0 - x1
 Subject To
- A0leb0: - 9 x0 + 8 x1 + 7 x2 <= 7
- A1leb1: 4 x0 - x1 + 3 x2 <= 4
- A2leb2: 5 x0 + 10 x1 - 9 x2 <= -7
- A3leb3: - 2 x0 + 4 x1 + 3 x2 <= 4
- A4leb4: - 9 x1 + 8 x2 <= 8
- A5leb5: - 2 x0 + 2 x1 - 2 x2 <= -1
+ A0leb0: - x0 + 3 x1 - 5 x2 <= -1
+ A1leb1: 8 x1 <= 8
+ A2leb2: - 8 x0 - 5 x1 + x2 <= -11
+ A3leb3: 5 x0 + 2 x1 - 2 x2 <= 7
+ A4leb4: - 9 x0 - 4 x1 <= -13
+ A5leb5: - 2 x0 - 7 x1 + 7 x2 <= 0
 
 Bounds
  0 <= x0 <= 1

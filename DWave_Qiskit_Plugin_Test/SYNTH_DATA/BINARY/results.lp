@@ -38,15 +38,15 @@ test_bin_5
 Leap Hybrid
  found solution!
 DWaveClique
-OptimizationResultStatus.INFEASIBLE
+ found solution!
 DWaveSampler
-OptimizationResultStatus.INFEASIBLE
+ found solution!
  ------------------------------------- 
 test_bin_6
 Leap Hybrid
  found solution!
 DWaveClique
- found solution!
+OptimizationResultStatus.INFEASIBLE
 DWaveSampler
  found solution!
  ------------------------------------- 
@@ -54,7 +54,7 @@ test_bin_7
 Leap Hybrid
  found solution!
 DWaveClique
-OptimizationResultStatus.INFEASIBLE
+ found solution!
 DWaveSampler
  found solution!
  ------------------------------------- 
@@ -64,13 +64,13 @@ Leap Hybrid
 DWaveClique
 OptimizationResultStatus.INFEASIBLE
 DWaveSampler
- found solution!
+OptimizationResultStatus.INFEASIBLE
  ------------------------------------- 
 test_bin_9
 Leap Hybrid
  found solution!
 DWaveClique
- found solution!
+OptimizationResultStatus.INFEASIBLE
 DWaveSampler
  found solution!
  ------------------------------------- 
@@ -80,4 +80,4 @@ Leap Hybrid
 DWaveClique
 OptimizationResultStatus.INFEASIBLE
 DWaveSampler
- found solution!
+OptimizationResultStatus.INFEASIBLE

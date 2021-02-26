@@ -3,16 +3,16 @@
 \Problem name: test_bin_4
 
 Minimize
- obj: - x0 - x2 + x3
+ obj: - x0 - x1 + x2 + x3
 Subject To
- A0leb0: - 2 x0 + 10 x1 + 9 x2 + 8 x3 <= 12
- A1leb1: - 3 x0 - 10 x1 - 10 x2 + x3 <= -10
- A2leb2: 5 x0 + 4 x1 + 9 x2 + 8 x3 <= 6
- A3leb3: - 9 x0 - 2 x1 + 8 x2 + 2 x3 <= -1
- A4leb4: 6 x0 + 6 x1 - x2 + 10 x3 <= 6
- A5leb5: 4 x0 + 2 x1 - 3 x2 - 10 x3 <= 2
- A6leb6: - 3 x0 + 8 x1 + 5 x2 - 4 x3 <= 10
- A7leb7: 8 x0 - 8 x1 - 7 x2 - 3 x3 <= -6
+ A0leb0: - x0 - 5 x1 - 6 x2 - 7 x3 <= -13
+ A1leb1: - 2 x0 - 10 x1 - 9 x3 <= -7
+ A2leb2: 3 x0 + 6 x1 - 10 x2 + 7 x3 <= -1
+ A3leb3: - 3 x0 - 6 x1 + 6 x2 + 2 x3 <= 10
+ A4leb4: - 4 x0 + 5 x1 - 6 x2 - 6 x3 <= -12
+ A5leb5: - x0 - 6 x1 + 7 x2 + 9 x3 <= 16
+ A6leb6: 5 x0 + 5 x1 - 9 x3 <= -9
+ A7leb7: - 7 x0 + 5 x1 + 10 x2 - 4 x3 <= 8
 
 Bounds
  0 <= x0 <= 1

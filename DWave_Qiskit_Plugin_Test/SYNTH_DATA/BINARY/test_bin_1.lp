@@ -5,8 +5,8 @@
 Minimize
  obj:
 Subject To
- A0leb0: - 8 x0 <= 1
- A1leb1: 8 x0 <= 2
+ A0leb0: 4 x0 <= 5
+ A1leb1: 6 x0 <= 7
 
 Bounds
  0 <= x0 <= 1

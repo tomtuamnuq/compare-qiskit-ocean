@@ -3,11 +3,10 @@
 \Problem name: test_4
 
 Minimize
- obj: x0_0 - x0_2 - x0_3
+ obj: - x0_1 - x0_2 + x0_3
 Subject To
- A0_leb0: - 10 x0_0 + 7 x0_1 + 3 x0_2 - 3 x0_3 <= 1
- A0_leb1: 2 x0_0 - 4 x0_2 + 6 x0_3 <= 4
- A0_leb2: 2 x0_0 + 2 x0_1 + 5 x0_2 + x0_3 <= 8
+ A0_leb0: - 3 x0_0 + 3 x0_1 - 4 x0_2 - 5 x0_3 <= -7
+ A0_leb1: - 3 x0_0 - 3 x0_1 + 3 x0_2 <= -2
 
 Bounds
  0 <= x0_0 <= 1

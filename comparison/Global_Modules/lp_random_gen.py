@@ -16,7 +16,7 @@ class random_lp_int:
         self.lb = lowerbound
         self.ub = upperbound
         
-    def createLP(self, name, multiple = 1):
+    def createLP(self, name, multiple = 1, A_lb = -10, A_ub = 10, c_lb = -1, c_ub = 1):
         self.name = name
         self.model = QuadraticProgram(self.name)
         self.multiple = multiple
@@ -29,7 +29,7 @@ class random_lp_int:
                 else:
                     self.model.integer_var(lowerbound = self.lb, upperbound = self.ub, name = varname(k,j))
             
-            self._create_data(d_ub = self.ub+1)
+            self._create_data(self.ub+1, A_lb , A_ub , c_lb , c_ub )
             objective = np.append(objective,self.c)
             self._add_constrs(k)
             
@@ -39,14 +39,12 @@ class random_lp_int:
         return self.model
 
     
-    def _create_data(self, d_ub = 1 , A_lb = -10, A_ub = 10, c_lb = -1, c_ub = 1):
+    def _create_data(self, d_ub , A_lb, A_ub , c_lb, c_ub ):
         self.x = np.random.randint(self.lb,self.ub+1,size = self.n)
         self.d = np.random.randint(0,d_ub+1,size = self.m)
         self.A = np.random.randint(A_lb,A_ub+1,size = (self.m,self.n))
         self.b = self.A.dot(self.x) + self.d
         self.c = np.random.randint(c_lb,c_ub+1,size = self.n)
-        
-    
     def _add_constrs(self,k):    
 
         # add linear constraints

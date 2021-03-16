@@ -20,7 +20,8 @@ import os
 
 
 def create_dwave_meo(sampler: DWaveSampler = None,
-                     num_reads: Optional[int] = None) -> MinimumEigenOptimizer:
+                     num_reads: Optional[int] = None,
+                     penalty: Optional[float] = None) -> MinimumEigenOptimizer:
     """
     Create a dwave minimum eigen optimizer.
 
@@ -29,6 +30,8 @@ def create_dwave_meo(sampler: DWaveSampler = None,
             Defaults to None.
         num_reads (Optional[int], optional): Set num_reads in
            DWaveMinimumEigensolver. Defaults to None.
+        penalty (Optional[int], optional): Set penalty in
+           MinimumEigensolver. Defaults to None.
 
     Returns:
         MinimumEigenOptimizer: Optimizer with DWaveMinimumEigensolver.
@@ -39,7 +42,7 @@ def create_dwave_meo(sampler: DWaveSampler = None,
     else:
         dwave_solver = DWaveMinimumEigensolver(sampler=sampler,
                                                num_reads=num_reads)
-    return MinimumEigenOptimizer(dwave_solver)
+    return MinimumEigenOptimizer(dwave_solver, penalty=penalty)
 
 
 def _create_model(filename: str, model_name: str,

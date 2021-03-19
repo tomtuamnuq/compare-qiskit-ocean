@@ -4,11 +4,17 @@ Created on Sun Jan 31 09:58:32 2021.
 @author: tom
 """
 
-from typing import Tuple, Optional
+import os
+from typing import Tuple, Optional, Dict
+from collections import OrderedDict
 import numpy as np
+
 from qiskit.optimization import QuadraticProgram
 from qiskit.optimization.converters import QuadraticProgramToQubo
+
 from docplex.mp.model import Model
+from docplex.mp.advmodel import AdvModel
+from docplex.mp.model_reader import ModelReader
 
 
 def _varname(k, j: int) -> str:
@@ -228,3 +234,41 @@ class RandomLP(QuadraticProgram):
                                     matrix_a_lb=matrix_a_lb,
                                     matrix_a_ub=matrix_a_ub,
                                     c_lb=c_lb, c_ub=c_ub)
+
+
+def _create_model(filename: str, model_name: str,
+                  penalty: Optional[float] = None) -> RandomLP:
+    """Create a random linear program from cplex model in file."""
+    model = ModelReader.read(filename=filename,
+                             model_name=model_name, model_class=AdvModel)
+
+    return RandomLP.create_from_docplex(model, penalty=penalty)
+
+
+def create_models(path: str, penalty:
+                  Optional[float] = None) -> Dict[str, RandomLP]:
+    """
+    Create random linear program instances from cplex model files.
+
+    Args:
+        path (str): File link to read all models from.
+        penalty (TYPE): Set individual penalty terms to be used by
+            QuadraticProgramToQubo.
+
+    Returns:
+        qps_sorted (OrderedDict): An ordered dict with RandomLP instances.
+
+    """
+    _, _, filenames = next(os.walk(path))
+    qps = {}
+    for file in filenames:
+        name, _ = os.path.splitext(file)
+        qps[name] = _create_model(path+file, name, penalty=penalty)
+
+    qps_sorted = OrderedDict()
+
+    for qp_name in sorted(qps.keys(),
+                          key=lambda name: qps[name].complexity()):
+        qps_sorted[qp_name] = qps[qp_name]
+
+    return qps_sorted

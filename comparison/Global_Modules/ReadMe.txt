@@ -1,2 +1,0 @@
-The modules in this directory must be placed in a dir, which is listed in your PYTHONPATH, e.g. {venv-root}/lib/{python-version}/site-packages
-Alternatively, put a .pth file containing a string with this directory in a dir, which is listed in your PYTHONPATH.

@@ -25,8 +25,6 @@ def _varname(k, j: int) -> str:
 class RandomLP(QuadraticProgram):
     """Random linear program class."""
 
-    _conv = QuadraticProgramToQubo()
-
     def __init__(self, num_constr: int, num_vars: int,
                  name: str, multiple: int = 1, *,
                  penalty: Optional[float] = None,
@@ -51,11 +49,10 @@ class RandomLP(QuadraticProgram):
 
         """
         super().__init__(name)
-        self.dim = (num_constr, num_vars)
+        self._dim = (num_constr, num_vars)
         self.multiple = multiple
-        self.penalty = penalty
-        if penalty is not None:
-            RandomLP._conv.penalty = penalty
+        self._conv = QuadraticProgramToQubo(penalty)
+
         if boundaries is not None:
             lower_bound, upper_bound = boundaries["x"]
             objective = np.array([])
@@ -66,9 +63,9 @@ class RandomLP(QuadraticProgram):
                 self._add_constrs(k, matrix_a, vec_b)
 
             self.minimize(linear=objective)
-            self.qubo = RandomLP._conv.convert(self)
+            self._qubo = self._conv.convert(self)
         else:
-            self.qubo = None
+            self._qubo = None
 
     def _add_vars(self, num_vars: int, lower_bound: int, upper_bound: int,
                   var_k: int):
@@ -88,7 +85,7 @@ class RandomLP(QuadraticProgram):
         matrix_a_lb, matrix_a_ub = boundaries["A"]
         c_lb, c_ub = boundaries["c"]
         d_ub = boundaries["d"]
-        m, n = self.dim
+        m, n = self._dim
         x = np.random.randint(lower_bound, upper_bound+1, size=n)
         d = np.random.randint(0, d_ub+1, size=m)
         A = np.random.randint(matrix_a_lb, matrix_a_ub+1, size=(m, n))
@@ -98,7 +95,7 @@ class RandomLP(QuadraticProgram):
 
     def _add_constrs(self, k: int, matrix_a: np.ndarray, vec_b: np.ndarray):
         """Add linear constraints to CPLEX model."""
-        m, n = self.dim  # pylint: disable=invalid-name
+        m, n = self._dim  # pylint: disable=invalid-name
         for i in range(m):
             linear = {}
             for j in range(n):
@@ -106,6 +103,37 @@ class RandomLP(QuadraticProgram):
             self.linear_constraint(linear=linear, sense='<=',
                                    rhs=vec_b[i],
                                    name='A'+str(k)+"_le"+'b'+str(i))
+
+    @property
+    def qubo(self) -> QuadraticProgram:
+        """Returns the qubo representation of this random linear program.
+
+        Returns:
+            This linear program as quadratic program in qubo form.
+        """
+        if self._qubo is None:
+            self._qubo = self._conv.convert(self)
+        return self._qubo
+
+    @property
+    def penalty(self) -> Optional[float]:
+        """Returns the penalty factor used in conversion.
+
+        Returns:
+            The penalty factor used in conversion.
+        """
+        return self._conv.penalty
+
+    @penalty.setter
+    def penalty(self, penalty: Optional[float]) -> None:
+        """Set a new penalty factor.
+
+        Args:
+            penalty: The new penalty factor.
+                     If None is passed, penalty factor will be automatically calculated.
+        """
+        self._conv.penalty = penalty
+        self._qubo = self._conv.convert(self)
 
     def complexity(self) -> int:
         """
@@ -126,8 +154,8 @@ class RandomLP(QuadraticProgram):
 
         """
         super().from_docplex(model)
-        self.qubo = RandomLP._conv.convert(self)
-        self.dim = (self.get_num_linear_constraints(), self.get_num_vars())
+        self._qubo = self._conv.convert(self)
+        self._dim = (self.get_num_linear_constraints(), self.get_num_vars())
         self.multiple = 1
 
     @classmethod

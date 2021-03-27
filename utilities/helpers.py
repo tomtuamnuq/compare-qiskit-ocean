@@ -40,3 +40,8 @@ def create_dwave_meo(sampler: DWaveSampler = None,
     dwave_solver = DWaveMinimumEigensolver(sampler=custom_sampler)
 
     return MinimumEigenOptimizer(dwave_solver, penalty=penalty)
+
+
+def cplex_varname(k, j: int) -> str:
+    """Return name for quadratic program variable to meet CLPEX conventions."""
+    return'x' + str(k) + "_" + str(j)

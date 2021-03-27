@@ -5,7 +5,7 @@ Created on Sun Jan 31 09:58:32 2021.
 """
 
 import os
-from typing import Tuple, Optional, Dict
+from typing import Tuple, Optional, Dict, TypedDict
 from collections import OrderedDict
 import numpy as np
 
@@ -16,19 +16,41 @@ from docplex.mp.model import Model
 from docplex.mp.advmodel import AdvModel
 from docplex.mp.model_reader import ModelReader
 
-
-def _varname(k, j: int) -> str:
-    """Return name for linear program variable to meet CLPEX conventions."""
-    return'x' + str(k) + "_" + str(j)
+from utilities.helpers import cplex_varname
+from random_lp.random_qp import RandomQP
 
 
-class RandomLP(QuadraticProgram):
-    """Random linear program class."""
+class LP_Boundaries(TypedDict):
+    x: Tuple[int, int]
+    A: Tuple[int, int]
+    c: Tuple[int, int]
+    d: int
+
+
+class RandomLP(RandomQP):
+    """Random linear program class.
+
+    Defines a class with randomly constructed constraints and objective function.
+    It is an optimization problem in which both the objective function and
+    all constraints are linear.
+    Problem:
+    :math:`
+        \\underset{x}{\\min}\\quad \\c^T x \\
+        \\text{such that }  Ax\\le b\\
+         A \\in \\mathbb{Z}^{m\\times n}\\
+         x,c \\in \\mathbb{Z}^{n}\\
+         b \\in \\mathbb{Z}^{m}\\
+    `
+    The random program is constructed as follows:
+    Choose random c. Choose random x. Choose random positive number for each constraint as vector d.
+    Set b = Ax + d.
+    The upperbound for d alters feasible solution space.
+    """
 
     def __init__(self, num_constr: int, num_vars: int,
                  name: str, multiple: int = 1, *,
                  penalty: Optional[float] = None,
-                 boundaries: Optional[dict] = None):
+                 boundaries: Optional[LP_Boundaries] = None):
         """
         Create an instance of RandomLP with specified boundaries.
 
@@ -40,7 +62,7 @@ class RandomLP(QuadraticProgram):
                 num_constr and num_vars each.
             penalty (Optional[float], optional): Penalty factor see
                 QuadraticProgramToQubo. Defaults to None.
-            boundaries (Optional[dict], optional):
+            boundaries (Optional[LP_Boundaries], optional):
                 Dictionary with bounds as follows. Defaults to None.
                 "x" : Lower and upper bound of solution space.
                 "A" : Lower and upper bound for constraint matrix A.
@@ -48,135 +70,24 @@ class RandomLP(QuadraticProgram):
                 "d" : Upper bound for delta vector d.
 
         """
-        super().__init__(name)
-        self._dim = (num_constr, num_vars)
-        self.multiple = multiple
-        self._conv = QuadraticProgramToQubo(penalty)
+        base_boundaries = boundaries.copy()
+        base_boundaries["Q"] = (0, 0)
+        super().__init__(num_constr, num_vars, name, multiple,
+                         penalty=penalty,
+                         boundaries=base_boundaries)
 
-        if boundaries is not None:
-            lower_bound, upper_bound = boundaries["x"]
-            objective = np.array([])
-            for k in range(multiple):
-                self._add_vars(num_vars, lower_bound, upper_bound, k)
-                matrix_a, vec_b, vec_c = self._create_data(boundaries)
-                objective = np.append(objective, vec_c)
-                self._add_constrs(k, matrix_a, vec_b)
-
-            self.minimize(linear=objective)
-            self._qubo = self._conv.convert(self)
-        else:
-            self._qubo = None
-
-    def _add_vars(self, num_vars: int, lower_bound: int, upper_bound: int,
-                  var_k: int):
-        for j in range(num_vars):
-            if lower_bound == 0 and upper_bound == 1:
-                self.binary_var(_varname(var_k, j))
-            else:
-                self.integer_var(lowerbound=lower_bound,
-                                 upperbound=upper_bound,
-                                 name=_varname(var_k, j))
-
-    def _create_data(self, boundaries: dict) -> Tuple[np.ndarray,
-                                                      np.ndarray, np.ndarray]:
-        """Create random data."""
-        #  pylint: disable=invalid-name
+    def _populate_random(self, boundaries):
+        """Create random constraints and objective function."""
         lower_bound, upper_bound = boundaries["x"]
-        matrix_a_lb, matrix_a_ub = boundaries["A"]
-        c_lb, c_ub = boundaries["c"]
-        d_ub = boundaries["d"]
-        m, n = self._dim
-        x = np.random.randint(lower_bound, upper_bound+1, size=n)
-        d = np.random.randint(0, d_ub+1, size=m)
-        A = np.random.randint(matrix_a_lb, matrix_a_ub+1, size=(m, n))
-        b = A.dot(x) + d
-        c = np.random.randint(c_lb, c_ub+1, size=n)
-        return A, b, c
-
-    def _add_constrs(self, k: int, matrix_a: np.ndarray, vec_b: np.ndarray):
-        """Add linear constraints to CPLEX model."""
-        m, n = self._dim  # pylint: disable=invalid-name
-        for i in range(m):
-            linear = {}
-            for j in range(n):
-                linear[_varname(k, j)] = matrix_a[i, j]
-            self.linear_constraint(linear=linear, sense='<=',
-                                   rhs=vec_b[i],
-                                   name='A'+str(k)+"_le"+'b'+str(i))
-
-    @property
-    def qubo(self) -> QuadraticProgram:
-        """Returns the qubo representation of this random linear program.
-
-        Returns:
-            This linear program as quadratic program in qubo form.
-        """
-        if self._qubo is None:
-            self._qubo = self._conv.convert(self)
-        return self._qubo
-
-    @property
-    def penalty(self) -> Optional[float]:
-        """Returns the penalty factor used in conversion.
-
-        Returns:
-            The penalty factor used in conversion.
-        """
-        return self._conv.penalty
-
-    @penalty.setter
-    def penalty(self, penalty: Optional[float]) -> None:
-        """Set a new penalty factor.
-
-        Args:
-            penalty: The new penalty factor.
-                     If None is passed, penalty factor will be automatically calculated.
-        """
-        self._conv.penalty = penalty
+        objective = np.array([])
+        _, num_vars = self._dim
+        for k in range(self.multiple):
+            self._add_vars(num_vars, lower_bound, upper_bound, k)
+            matrix_a, vec_b, vec_c = self._create_linear_data(boundaries)
+            objective = np.append(objective, vec_c)
+            self._add_constrs(k, matrix_a, vec_b)
+        self.minimize(linear=objective)
         self._qubo = self._conv.convert(self)
-
-    def complexity(self) -> int:
-        """
-        Measurement for complexity of problem in terms of quantum bits.
-
-        Returns:
-            int: Number of binary variables in QUBO problem.
-
-        """
-        return self.qubo.get_num_vars()
-
-    def from_docplex(self, model: Model) -> None:
-        """
-        Populate an instance of RandomLP from docplex model.
-
-        Args:
-            model (Model): The model to built the LP from.
-
-        """
-        super().from_docplex(model)
-        self._qubo = self._conv.convert(self)
-        self._dim = (self.get_num_linear_constraints(), self.get_num_vars())
-        self.multiple = 1
-
-    @classmethod
-    def create_from_docplex(cls, model: Model,
-                            penalty: Optional[float] = None) -> 'RandomLP':
-        """
-        Create an instance of RandomLP by invoking from_docplex(model).
-
-        Args:
-            cls (TYPE): RandomLP.
-            model (Model): The model to built the LP from.
-            penalty (Optional[float], optional): Penalty factor see
-                QuadraticProgramToQubo. Defaults to None.
-
-        Returns:
-            random_lp (RandomLP): RandomLP  model.
-
-        """
-        rlp = RandomLP(1, 1, "", penalty=penalty)  # set in from_docplex(model)
-        rlp.from_docplex(model)
-        return rlp
 
     @classmethod
     def create_random_lp(
@@ -265,8 +176,8 @@ class RandomLP(QuadraticProgram):
 
 
 def _create_model(filename: str, model_name: str,
-                  penalty: Optional[float] = None) -> RandomLP:
-    """Create a random linear program from cplex model in file."""
+                  penalty: Optional[float] = None) -> RandomQP:
+    """Create a random quadratic program from cplex model in file."""
     model = ModelReader.read(filename=filename,
                              model_name=model_name, model_class=AdvModel)
 
@@ -274,9 +185,9 @@ def _create_model(filename: str, model_name: str,
 
 
 def create_models(path: str, penalty:
-                  Optional[float] = None) -> Dict[str, RandomLP]:
+                  Optional[float] = None) -> Dict[str, RandomQP]:
     """
-    Create random linear program instances from cplex model files.
+    Create random quadratic program instances from cplex model files.
 
     Args:
         path (str): File link to read all models from.
@@ -284,7 +195,7 @@ def create_models(path: str, penalty:
             QuadraticProgramToQubo.
 
     Returns:
-        qps_sorted (OrderedDict): An ordered dict with RandomLP instances.
+        qps_sorted (OrderedDict): An ordered dict with RandomQP instances.
 
     """
     _, _, filenames = next(os.walk(path))

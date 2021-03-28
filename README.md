@@ -1,6 +1,87 @@
 # compare-qiskit-ocean
 I try to find my way into quantum computing by a comparison of ocean and qiskit framework. In particular, I will test Linear and Quadratic Programs.
 
+In random_lp package is a class RandomQP which is used to test QAOA on IBMQ and Quantum Annealing on DWave Leap.
+The class constructs quadratic programs of the form:
+min 1/2 x Q x + cx 
+such that Ax <= b
+
+The class RandomLP constructs programs of the form:
+min cx 
+such that Ax <= b
+
+x and c are integer vectors of size n.
+b sets m integer constraints.
+A is an integer matrix of size m x n.
+Q is an integer matrix of size n x n.
+
+The problems can be constructed as fully connected or sparse.
+
+The Qiskit framework is used to derive QUBOs from the QPs.
+To set DWave sampler as solver in Minimum Eigen Optimizer the dwave_qiskit_plugin is used.
+
+In both Ocean and Qiskit folders are Jupyter Notes with tests:
+comparison/Qiskit/LinearProgramming/QAOA/
+comparison/Ocean/LinearProgramming/DWave_Qiskit_Plugin_Test/
+
+Results:
+For complete logs and output see RESULTS folders.
+
+Random LP
+    Dense
+
+        DWave Hybrid up to 200 qubits near optimal
+        Dwave Hybrid up to 218 qubits found solution but not optimal
+        DWave pure quantum with 29 qubits and clique embedding near optimal
+
+        QAOA up to 22 qubits near optimal
+    
+    Sparse
+
+        Dwave Hybrid up to 217 qubits with non optimal solutions
+        DWave pure quantum with 100 qubits and auto embedding found solution but not optimal
+
+        QAOA up to 
+
+Random QP
+    Dense
+
+        DWave Hybrid up to  102 qubits near optimal
+        Dwave Hybrid up to 185 qubits found solution but not optimal
+        calculation gets stuck on problem with 225 qubits
+
+        DWave pure quantum with 25 qubits and clique embedding near optimal
+        DWave pure quantum with 36 qubits and auto embedding found solution but not optimal
+
+        QAOA up to 17 qubits near optimal
+    
+    Sparse
+
+        Dwave Hybrid up to  qubits with non optimal solutions
+        DWave pure quantum with  qubits and auto embedding found solution but not optimal
+
+        QAOA up to 13 qubits optimal
+        QAOA up to 17 qubits near optimal
+
+
+
+
+
+    
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Acknowledgements:
 
 I acknowledge the use of DWave Systems services for this work. 
@@ -20,3 +101,4 @@ I have used one instance of qplib as Leap max test:
 Fabio Furini, Emiliano Traversi, Pietro Belotti, Antonio Frangioni, Ambros Gleixner, Nick Gould, Leo Liberti, Andrea Lodi, Ruth Misener, Hans Mittelmann, Nikolaos Sahinidis, Stefan Vigerske, and Angelika Wiegele. QPLIB: A Library of Quadratic Programming Instances, Mathematical Programming Computation, 2018, DOI:10.1007/s12532-018-0147-4
 
 Some linear program problems found at https://people.math.sc.edu/Burkardt/datasets/mps/mps.html (distributed under the GNU LGPL license).
+

@@ -5,7 +5,7 @@ Created on Sun Jan 31 09:58:32 2021.
 """
 
 import os
-from typing import Tuple, Optional, Dict, TypedDict
+from typing import Tuple, Optional, Dict, TypedDict, Union
 from collections import OrderedDict
 import numpy as np
 
@@ -184,7 +184,7 @@ def _create_model(filename: str, model_name: str,
     return RandomLP.create_from_docplex(model, penalty=penalty)
 
 
-def create_models(path: str, penalty:
+def create_models(path: 'Union[list[str],str]', penalty:
                   Optional[float] = None) -> Dict[str, RandomQP]:
     """
     Create random quadratic program instances from cplex model files.
@@ -195,14 +195,18 @@ def create_models(path: str, penalty:
             QuadraticProgramToQubo.
 
     Returns:
-        qps_sorted (OrderedDict): An ordered dict with RandomQP instances.
+        qps_sorted (OrderedDict): An dict with RandomQP instances ordered by number of qubits.
 
     """
-    _, _, filenames = next(os.walk(path))
+    if type(path) is str:
+        path = [path]
     qps = {}
-    for file in filenames:
-        name, _ = os.path.splitext(file)
-        qps[name] = _create_model(path+file, name, penalty=penalty)
+    for p in path:
+        _, _, filenames = next(os.walk(p))
+
+        for file in filenames:
+            name, _ = os.path.splitext(file)
+            qps[name] = _create_model(p+file, name, penalty=penalty)
 
     qps_sorted = OrderedDict()
 

@@ -130,6 +130,7 @@ class RandomQP(QuadraticProgram):
 
     def _add_vars(self, num_vars: int, lower_bound: int, upper_bound: int,
                   var_k: int):
+        """Add variables to CPLEX model."""
         for j in range(num_vars):
             if lower_bound == 0 and upper_bound == 1:
                 self.binary_var(cplex_varname(var_k, j))
@@ -204,14 +205,14 @@ class RandomQP(QuadraticProgram):
         self.multiple = 1
 
     @classmethod
-    def create_from_docplex(cls, model: Model,
+    def create_from_lp_file(cls, filename: str,
                             penalty: Optional[float] = None) -> 'RandomQP':
         """
         Create an instance of RandomQP by invoking from_docplex(model).
 
         Args:
             cls (TYPE): RandomQP.
-            model (Model): The model to built the QP from.
+            filename: The filename of the file to be loaded.
             penalty (Optional[float], optional): Penalty factor see
                 QuadraticProgramToQubo. Defaults to None.
 
@@ -220,7 +221,7 @@ class RandomQP(QuadraticProgram):
 
         """
         rqp = RandomQP(1, 1, "", penalty=penalty)  # set in from_docplex(model)
-        rqp.from_docplex(model)
+        rqp.read_from_lp_file(filename)  # calls from_docplex
         return rqp
 
     @classmethod

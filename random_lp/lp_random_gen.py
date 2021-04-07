@@ -9,13 +9,6 @@ from typing import Tuple, Optional, Dict, TypedDict, Union
 from collections import OrderedDict
 import numpy as np
 
-from qiskit.optimization import QuadraticProgram
-from qiskit.optimization.converters import QuadraticProgramToQubo
-
-from docplex.mp.model import Model
-from docplex.mp.advmodel import AdvModel
-from docplex.mp.model_reader import ModelReader
-
 from utilities.helpers import cplex_varname
 from random_lp.random_qp import RandomQP
 
@@ -175,15 +168,6 @@ class RandomLP(RandomQP):
                                     c_lb=c_lb, c_ub=c_ub)
 
 
-def _create_model(filename: str, model_name: str,
-                  penalty: Optional[float] = None) -> RandomQP:
-    """Create a random quadratic program from cplex model in file."""
-    model = ModelReader.read(filename=filename,
-                             model_name=model_name, model_class=AdvModel)
-
-    return RandomLP.create_from_docplex(model, penalty=penalty)
-
-
 def create_models(path: 'Union[list[str],str]', penalty:
                   Optional[float] = None) -> Dict[str, RandomQP]:
     """
@@ -195,7 +179,7 @@ def create_models(path: 'Union[list[str],str]', penalty:
             QuadraticProgramToQubo.
 
     Returns:
-        qps_sorted (OrderedDict): An dict with RandomQP instances ordered by number of qubits.
+        qps_sorted (OrderedDict): A dict with RandomQP instances ordered by number of qubits.
 
     """
     if type(path) is str:
@@ -206,7 +190,7 @@ def create_models(path: 'Union[list[str],str]', penalty:
 
         for file in filenames:
             name, _ = os.path.splitext(file)
-            qps[name] = _create_model(p+file, name, penalty=penalty)
+            qps[name] = RandomLP.create_from_lp_file(p+file, penalty=penalty)
 
     qps_sorted = OrderedDict()
 

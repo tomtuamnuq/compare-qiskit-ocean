@@ -8,8 +8,8 @@ Created on Sat Mar 27 11:49:35 2021.
 from typing import Tuple, Optional, Dict, TypedDict
 import numpy as np
 
-from qiskit.optimization import QuadraticProgram
-from qiskit.optimization.converters import QuadraticProgramToQubo
+from qiskit_optimization import QuadraticProgram
+from qiskit_optimization.converters import QuadraticProgramToQubo
 
 from docplex.mp.model import Model
 

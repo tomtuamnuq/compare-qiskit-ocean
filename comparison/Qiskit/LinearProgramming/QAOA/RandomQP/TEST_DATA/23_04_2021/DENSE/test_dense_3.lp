@@ -3,9 +3,10 @@
 \Problem name: test_dense_3
 
 Minimize
- obj: - x_0 - x_2 + [ - 2 x_0^2 + 2 x_0*x_2 + 2 x_1^2 - 4 x_1*x_2 ]/2
+ obj: - x_0 + x_2 + [ - 2 x_0^2 + 2 x_0*x_1 - 2 x_0*x_2 - 2 x_1^2 - 2 x_1*x_2
+      - 2 x_2^2 ]/2
 Subject To
- A0_eq_b0: x_1 - x_2 = 0
+ A0_eq_b0: x_0 - x_2 = 1
 
 Bounds
  0 <= x_0 <= 1

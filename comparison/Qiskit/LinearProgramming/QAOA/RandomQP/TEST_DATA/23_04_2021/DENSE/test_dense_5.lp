@@ -3,12 +3,12 @@
 \Problem name: test_dense_5
 
 Minimize
- obj: - x_0 + x_2 - x_3 + [ - 2 x_0*x_2 - 2 x_0*x_3 + 4 x_0*x_4 - 2 x_1^2
-      - 2 x_1*x_2 - 2 x_1*x_3 + 4 x_1*x_4 + 4 x_2*x_3 - 2 x_2*x_4 - 2 x_3^2
-      - 2 x_3*x_4 + 2 x_4^2 ]/2
+ obj: x_0 + x_1 + x_2 - x_3 + x_4 + [ - 2 x_0^2 - 4 x_0*x_1 - 2 x_0*x_3
+      - 2 x_0*x_4 - 4 x_1*x_2 + 4 x_1*x_4 - 2 x_2^2 - 2 x_2*x_4 + 2 x_3^2
+      + 2 x_4^2 ]/2
 Subject To
- A0_eq_b0: x_2 - x_3 = 0
- A0_eq_b1: - x_1 + x_2 + x_4 = 1
+ A0_eq_b0: x_1 - x_2 + x_3 = 1
+ A0_eq_b1: - x_0 - x_1 - x_2 = -2
 
 Bounds
  0 <= x_0 <= 1

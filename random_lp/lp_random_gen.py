@@ -9,18 +9,17 @@ from typing import Tuple, Optional, Dict, TypedDict, Union
 from collections import OrderedDict
 import numpy as np
 
-from utilities.helpers import cplex_varname
-from random_lp.random_qp import RandomQP
+from random_lp.random_qp import RandomQuadraticProgram
 
 
-class LP_Boundaries(TypedDict):
+class RLPBoundaries(TypedDict):
     x: Tuple[int, int]
     A: Tuple[int, int]
     c: Tuple[int, int]
     d: int
 
 
-class RandomLP(RandomQP):
+class RandomLP(RandomQuadraticProgram):
     """Random linear program class.
 
     Defines a class with randomly constructed constraints and objective function.
@@ -43,7 +42,7 @@ class RandomLP(RandomQP):
     def __init__(self, num_constr: int, num_vars: int,
                  name: str, multiple: int = 1, *,
                  penalty: Optional[float] = None,
-                 boundaries: Optional[LP_Boundaries] = None):
+                 boundaries: Optional[RLPBoundaries] = None):
         """
         Create an instance of RandomLP with specified boundaries.
 
@@ -55,7 +54,7 @@ class RandomLP(RandomQP):
                 num_constr and num_vars each.
             penalty (Optional[float], optional): Penalty factor see
                 QuadraticProgramToQubo. Defaults to None.
-            boundaries (Optional[LP_Boundaries], optional):
+            boundaries (Optional[RLPBoundaries], optional):
                 Dictionary with bounds as follows. Defaults to None.
                 "x" : Lower and upper bound of solution space.
                 "A" : Lower and upper bound for constraint matrix A.
@@ -169,7 +168,7 @@ class RandomLP(RandomQP):
 
 
 def create_models(path: 'Union[list[str],str]', penalty:
-                  Optional[float] = None) -> Dict[str, RandomQP]:
+                  Optional[float] = None) -> Dict[str, RandomQuadraticProgram]:
     """
     Create random quadratic program instances from cplex model files.
 
@@ -179,18 +178,22 @@ def create_models(path: 'Union[list[str],str]', penalty:
             QuadraticProgramToQubo.
 
     Returns:
-        qps_sorted (OrderedDict): A dict with RandomQP instances ordered by number of qubits.
+        qps_sorted (OrderedDict): A dict with RandomQuadraticProgram instances
+         ordered by number of qubits.
 
     """
-    if type(path) is str:
-        path = [path]
+    if isinstance(path, str):
+        paths = [path]
+    else:
+        paths = path
     qps = {}
-    for p in path:
-        _, _, filenames = next(os.walk(p))
+    for path_ in paths:
+        _, _, filenames = next(os.walk(path_))
 
         for file in filenames:
             name, _ = os.path.splitext(file)
-            qps[name] = RandomLP.create_from_lp_file(p+file, penalty=penalty)
+            qps[name] = RandomLP.create_from_lp_file(
+                path_+file, penalty=penalty)
 
     qps_sorted = OrderedDict()
 

@@ -6,12 +6,14 @@ Created on Sun Jan 31 11:07:42 2021.
 
 from typing import Optional
 
-from qiskit.optimization.algorithms import MinimumEigenOptimizer
+from qiskit.optimization.algorithms import MinimumEigenOptimizer \
+    as MinimumEigenOptimizer_  # deprecated
 from qiskit import BasicAer
 from qiskit.providers.backend import Backend
-from qiskit.aqua import QuantumInstance, aqua_globals
-from qiskit.aqua.algorithms import QAOA
-from qiskit.aqua.components.optimizers import COBYLA
+from qiskit.utils import QuantumInstance, algorithm_globals
+from qiskit.algorithms import QAOA
+from qiskit.algorithms.optimizers import COBYLA
+from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
 from dwave.plugins.qiskit import DWaveMinimumEigensolver
 from dwave.system import AutoEmbeddingComposite, DWaveSampler
@@ -21,7 +23,7 @@ from utilities.custom_args_sampler import CustomArgsSampler
 
 def create_dwave_meo(sampler: DWaveSampler = None,
                      penalty: Optional[float] = None,
-                     **sample_kwargs) -> MinimumEigenOptimizer:
+                     **sample_kwargs) -> MinimumEigenOptimizer_:
     """
     Create a dwave minimum eigen optimizer with a CustomArgsSampler.
 
@@ -45,7 +47,7 @@ def create_dwave_meo(sampler: DWaveSampler = None,
     custom_sampler = CustomArgsSampler(sampler, sample_kwargs=sample_kwargs)
     dwave_solver = DWaveMinimumEigensolver(sampler=custom_sampler)
 
-    return MinimumEigenOptimizer(dwave_solver, penalty=penalty)
+    return MinimumEigenOptimizer_(dwave_solver, penalty=penalty)
 
 
 def create_qaoa_meo(backend: Backend = None,
@@ -68,7 +70,7 @@ def create_qaoa_meo(backend: Backend = None,
     Returns:
         MinimumEigenOptimizer: Optimizer with QAOA mes.
     """
-    aqua_globals.random_seed = q_seed
+    algorithm_globals.random_seed = q_seed
     optimizer = COBYLA()
     if backend is None:
         backend = BasicAer.get_backend('qasm_simulator')
@@ -83,4 +85,8 @@ def create_qaoa_meo(backend: Backend = None,
 
 def cplex_varname(k, j: int) -> str:
     """Return name for quadratic program variable to meet CLPEX conventions."""
-    return'x' + str(k) + "_" + str(j)
+    if k == 0:
+        name = 'x' + "_" + str(j)
+    else:
+        name = 'x' + str(k) + "_" + str(j)
+    return name

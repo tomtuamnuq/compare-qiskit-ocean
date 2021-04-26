@@ -8,23 +8,22 @@ Created on Sat Mar 27 11:49:35 2021.
 from typing import Tuple, Optional, Dict, TypedDict
 import numpy as np
 
-from qiskit.optimization import QuadraticProgram
-from qiskit.optimization.converters import QuadraticProgramToQubo
+from qiskit_optimization import QuadraticProgram
+from qiskit_optimization.converters import QuadraticProgramToQubo
 
 from docplex.mp.model import Model
 
 from utilities.helpers import cplex_varname
 
 
-class QP_Boundaries(TypedDict):
+class RQPBoundaries(TypedDict):
     x: Tuple[int, int]
     A: Tuple[int, int]
     Q: Tuple[int, int]
     c: Tuple[int, int]
-    d: int
 
 
-class RandomQP(QuadraticProgram):
+class RandomQuadraticProgram(QuadraticProgram):
     """Random quadratic program class.
 
     Defines a class with randomly constructed constraints and objective function.
@@ -33,7 +32,7 @@ class RandomQP(QuadraticProgram):
     Problem:
     :math:`
         \\underset{x}{\\min}\\quad \\frac{1}{2} x^T Q x + c^T x \\
-        \\text{such that }  Ax\\le b\\
+        \\text{such that }  Ax = b\\
          A \\in \\mathbb{Z}^{m\\times n}\\
          Q \\in \\mathbb{Z}^{n\\times n}\\
          x,c \\in \\mathbb{Z}^{n}\\
@@ -41,17 +40,15 @@ class RandomQP(QuadraticProgram):
     `
     The random program is constructed as follows:
     Choose random Q and c. Choose random x.
-    Choose random positive number for each constraint as vector d.
-    Set b = Ax + d.
-    The upperbound for d alters feasible solution space.
+    Set b = Ax.
     """
 
     def __init__(self, num_constr: int, num_vars: int,
                  name: str, multiple: int = 1, *,
                  penalty: Optional[float] = None,
-                 boundaries: Optional[QP_Boundaries] = None):
+                 boundaries: Optional[RQPBoundaries] = None):
         """
-        Create an instance of RandomQP with specified boundaries.
+        Create an instance of RandomQuadraticProgram with specified boundaries.
 
         Args:
             num_constr (int): Number of Constraints.
@@ -67,7 +64,6 @@ class RandomQP(QuadraticProgram):
                 "A" : Lower and upper bound for constraint matrix A.
                 "Q" : Lower and upper bound for objective matrix Q.
                 "c" : Lower and upper bound for objective vector c.
-                "d" : Upper bound for delta vector d.
 
         """
         super().__init__(name)
@@ -119,12 +115,10 @@ class RandomQP(QuadraticProgram):
         lower_bound, upper_bound = boundaries["x"]
         matrix_a_lb, matrix_a_ub = boundaries["A"]
         c_lb, c_ub = boundaries["c"]
-        d_ub = boundaries["d"]
         m, n = self._dim
         x = np.random.randint(lower_bound, upper_bound+1, size=n)
-        d = np.random.randint(0, d_ub+1, size=m)
         A = np.random.randint(matrix_a_lb, matrix_a_ub+1, size=(m, n))
-        b = A.dot(x) + d
+        b = A.dot(x)
         c = np.random.randint(c_lb, c_ub+1, size=n)
         return A, b, c
 
@@ -146,9 +140,9 @@ class RandomQP(QuadraticProgram):
             linear = {}
             for j in range(n):
                 linear[cplex_varname(k, j)] = matrix_a[i, j]
-            self.linear_constraint(linear=linear, sense='<=',
+            self.linear_constraint(linear=linear, sense='==',
                                    rhs=vec_b[i],
-                                   name='A'+str(k)+"_le"+'b'+str(i))
+                                   name='A'+str(k)+"_eq_"+'b'+str(i))
 
     @property
     def qubo(self) -> QuadraticProgram:
@@ -193,7 +187,7 @@ class RandomQP(QuadraticProgram):
 
     def from_docplex(self, model: Model) -> None:
         """
-        Populate an instance of RandomQP from docplex model.
+        Populate an instance of RandomQuadraticProgram from docplex model.
 
         Args:
             model (Model): The model to built the QP from.
@@ -206,21 +200,22 @@ class RandomQP(QuadraticProgram):
 
     @classmethod
     def create_from_lp_file(cls, filename: str,
-                            penalty: Optional[float] = None) -> 'RandomQP':
+                            penalty: Optional[float] = None) -> 'RandomQuadraticProgram':
         """
-        Create an instance of RandomQP by invoking from_docplex(model).
+        Create an instance of RandomQuadraticProgram by invoking from_docplex(model).
 
         Args:
-            cls (TYPE): RandomQP.
+            cls (TYPE): RandomQuadraticProgram.
             filename: The filename of the file to be loaded.
             penalty (Optional[float], optional): Penalty factor see
                 QuadraticProgramToQubo. Defaults to None.
 
         Returns:
-            random_qp (RandomQP): RandomQP  model.
+            random_qp (RandomQuadraticProgram): RandomQuadraticProgram  model.
 
         """
-        rqp = RandomQP(1, 1, "", penalty=penalty)  # set in from_docplex(model)
+        rqp = RandomQuadraticProgram(
+            1, 1, "", penalty=penalty)  # set in from_docplex(model)
         rqp.read_from_lp_file(filename)  # calls from_docplex
         return rqp
 
@@ -233,9 +228,9 @@ class RandomQP(QuadraticProgram):
             multiple: int = 1,
             matrix_a_lb: int = -5, matrix_a_ub: int = 5,
             matrix_q_lb: int = -2, matrix_q_ub: int = 2,
-            c_lb: int = -1, c_ub: int = 1) -> 'RandomQP':
+            c_lb: int = -1, c_ub: int = 1) -> 'RandomQuadraticProgram':
         """
-        Create an instance of RandomQP with specified and/or default bounds.
+        Create an instance of RandomQuadraticProgram with specified and/or default bounds.
 
         Args:
             name (str): Name of Linear Program.
@@ -261,16 +256,14 @@ class RandomQP(QuadraticProgram):
                 Defaults to 1.
 
         Returns:
-            RandomQP: An instance of a randomly constructed quadratic program.
+            RandomQuadraticProgram: An instance of a randomly constructed quadratic program.
 
         """
-        d_ub = upper_bound+1
         boundaries = {"x": (lower_bound, upper_bound),
                       "A": (matrix_a_lb, matrix_a_ub),
                       "Q": (matrix_q_lb, matrix_q_ub),
-                      "c": (c_lb, c_ub),
-                      "d": d_ub}
-        return RandomQP(
+                      "c": (c_lb, c_ub)}
+        return RandomQuadraticProgram(
             num_constr, num_vars, name, multiple,
             penalty=penalty,
             boundaries=boundaries)
@@ -284,7 +277,7 @@ class RandomQP(QuadraticProgram):
                                   matrix_a_ub: int = 1,
                                   matrix_q_lb: int = -1,
                                   matrix_q_ub: int = 1,
-                                  c_lb: int = -1, c_ub: int = 1) -> 'RandomQP':
+                                  c_lb: int = -1, c_ub: int = 1) -> 'RandomQuadraticProgram':
         """
         Create a random binary quadratic program by calling create_random_qp.
 
@@ -309,7 +302,7 @@ class RandomQP(QuadraticProgram):
             c_ub (int, optional): Upper bound for objective vector c.
                 Defaults to 1.
         Returns:
-            RandomQP: An instance of a randomly constructed binary program.
+            RandomQuadraticProgram: An instance of a randomly constructed binary program.
 
         """
         return cls.create_random_qp(name, num_constr, num_vars,

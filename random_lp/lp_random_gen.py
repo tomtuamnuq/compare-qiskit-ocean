@@ -16,7 +16,6 @@ class RLPBoundaries(TypedDict):
     x: Tuple[int, int]
     A: Tuple[int, int]
     c: Tuple[int, int]
-    d: int
 
 
 class RandomLP(RandomQuadraticProgram):
@@ -28,15 +27,13 @@ class RandomLP(RandomQuadraticProgram):
     Problem:
     :math:`
         \\underset{x}{\\min}\\quad \\c^T x \\
-        \\text{such that }  Ax\\le b\\
+        \\text{such that }  Ax = b\\
          A \\in \\mathbb{Z}^{m\\times n}\\
          x,c \\in \\mathbb{Z}^{n}\\
          b \\in \\mathbb{Z}^{m}\\
     `
     The random program is constructed as follows:
-    Choose random c. Choose random x. Choose random positive number for each constraint as vector d.
-    Set b = Ax + d.
-    The upperbound for d alters feasible solution space.
+    Choose random c. Choose random x. Set b = Ax
     """
 
     def __init__(self, num_constr: int, num_vars: int,
@@ -59,7 +56,6 @@ class RandomLP(RandomQuadraticProgram):
                 "x" : Lower and upper bound of solution space.
                 "A" : Lower and upper bound for constraint matrix A.
                 "c" : Lower and upper bound for objective vector c.
-                "d" : Upper bound for delta vector d.
 
         """
         base_boundaries = boundaries.copy()
@@ -116,11 +112,9 @@ class RandomLP(RandomQuadraticProgram):
             RandomLP: An instance of a randomly constructed linear program.
 
         """
-        d_ub = upper_bound+1
         boundaries = {"x": (lower_bound, upper_bound),
                       "A": (matrix_a_lb, matrix_a_ub),
-                      "c": (c_lb, c_ub),
-                      "d": d_ub}
+                      "c": (c_lb, c_ub)}
         return RandomLP(
             num_constr, num_vars, name, multiple,
             penalty=penalty,

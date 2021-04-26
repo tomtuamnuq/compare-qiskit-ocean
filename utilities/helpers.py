@@ -4,7 +4,9 @@ Created on Sun Jan 31 11:07:42 2021.
 @author: tom
 """
 
-from typing import Optional
+import os
+from typing import Dict, Optional, Union
+from collections import OrderedDict
 
 from qiskit.optimization.algorithms import MinimumEigenOptimizer \
     as MinimumEigenOptimizer_  # deprecated
@@ -17,6 +19,7 @@ from qiskit_optimization.algorithms import MinimumEigenOptimizer
 
 from dwave.plugins.qiskit import DWaveMinimumEigensolver
 from dwave.system import AutoEmbeddingComposite, DWaveSampler
+from qiskit_optimization.problems.quadratic_program import QuadraticProgram
 
 from utilities.custom_args_sampler import CustomArgsSampler
 
@@ -90,3 +93,38 @@ def cplex_varname(k, j: int) -> str:
     else:
         name = 'x' + str(k) + "_" + str(j)
     return name
+
+ def create_quadratic_programs_from_paths(
+        path: 'Union[list[str],str]') -> Dict[str, QuadraticProgram]:
+    """Create quadratic program instances from cplex model files.
+
+    Args:
+        path (str): File link or links to read all models from.
+
+    Returns:
+        qps_sorted (OrderedDict): A dict with QuadraticProgram instances
+         ordered by number of variables.
+
+    """
+    if isinstance(path, str):
+        paths = [path]
+    else:
+        paths = path
+    qps = {}
+    for path_ in paths:
+        _, _, filenames = next(os.walk(path_))
+
+        for file in filenames:
+            name, _ = os.path.splitext(file)
+            qp = QuadraticProgram()
+            qp.read_from_lp_file(path_+file)
+            qps[name] = qp
+
+    qps_sorted = OrderedDict()
+
+    for qp_name in sorted(qps.keys(),
+                          key=lambda name: qps[name].get_num_vars()()):
+        qps_sorted[qp_name] = qps[qp_name]
+
+    return qps_sorted
+

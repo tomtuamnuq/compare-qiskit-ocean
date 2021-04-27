@@ -6,8 +6,8 @@ Created on Sun Jan 31 11:07:42 2021.
 
 import os
 import warnings
-
-from typing import Dict, Optional, Union
+import numpy as np
+from typing import Callable, Dict, Optional, Union
 from collections import OrderedDict
 
 from qiskit import BasicAer
@@ -70,7 +70,10 @@ def create_dwave_meo(sampler: DWaveSampler = None,
 def create_qaoa_meo(backend: Backend = None,
                     penalty: Optional[float] = None,
                     q_seed: int = 10598,
-                    shots: int = 4096) -> MinimumEigenOptimizer:
+                    max_iter: int = 20,
+                    qaoa_callback: Optional[Callable[[
+                        int, np.ndarray, float, float], None]] = None,
+                    **sample_kwargs) -> MinimumEigenOptimizer:
     """
     Create a qaoa minimum eigen optimizer with.
 
@@ -79,23 +82,27 @@ def create_qaoa_meo(backend: Backend = None,
             Defaults to None. In this case qasm simulator is used.
         penalty (Optional[int], optional): Set penalty in
            MinimumEigensolver. Defaults to None.
-        q_seed (int): Set quantum seed in aqua and quantum instance.
+        q_seed (int): Set quantum seed global and in quantum instance.
             Defaults to 10598(as used in most issues).
-        shots (int): Set number of circuit exectutions in quantum instance.
-            Defaults to 4096
+        max_iter (int): Maximum number of iterations in classical
+            optimizer. Defaults to 20.
+        **sample_kwargs:
+            Optional keyword arguments for the QuantumInstance.
 
     Returns:
         MinimumEigenOptimizer: Optimizer with QAOA mes.
     """
     algorithm_globals.random_seed = q_seed
-    optimizer = COBYLA()
+    optimizer = COBYLA(maxiter=max_iter)
+
     if backend is None:
         backend = BasicAer.get_backend('qasm_simulator')
     quantum_instance = QuantumInstance(backend,
                                        seed_simulator=q_seed,
                                        seed_transpiler=q_seed,
-                                       shots=shots)
-    qaoa_mes = QAOA(quantum_instance=quantum_instance, optimizer=optimizer)
+                                       **sample_kwargs)
+    qaoa_mes = QAOA(quantum_instance=quantum_instance,
+                    optimizer=optimizer, callback=qaoa_callback)
 
     return MinimumEigenOptimizer(qaoa_mes, penalty=penalty)
 

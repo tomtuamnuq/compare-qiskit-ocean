@@ -3,7 +3,8 @@
 \Problem name: test_3
 
 Minimize
- obj: x_0 + x_1 + [ - 2 x_0^2 + 4 x_1*x_2 - 2 x_2^2 ]/2
+ obj: - 5 x_0 - 2 x_1 - 5 x_2 + [ - 8 x_0^2 - 6 x_0*x_1 - 2 x_0*x_2 - 8 x_1*x_2
+      - 8 x_2^2 ]/2
 Subject To
 
 Bounds

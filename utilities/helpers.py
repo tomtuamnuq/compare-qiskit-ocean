@@ -5,21 +5,32 @@ Created on Sun Jan 31 11:07:42 2021.
 """
 
 import os
+import warnings
+
 from typing import Dict, Optional, Union
 from collections import OrderedDict
 
-from qiskit.optimization.algorithms import MinimumEigenOptimizer \
-    as MinimumEigenOptimizer_  # deprecated
 from qiskit import BasicAer
 from qiskit.providers.backend import Backend
 from qiskit.utils import QuantumInstance, algorithm_globals
 from qiskit.algorithms import QAOA
 from qiskit.algorithms.optimizers import COBYLA
+
+with warnings.catch_warnings():
+    # Since Aqua is deprecated but dwave_qiskit_plugin is not updated
+    # we ignore DeprecationWarnings.
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    from qiskit.optimization.algorithms import MinimumEigenOptimizer \
+        as MinimumEigenOptimizer_  # deprecated
+    from qiskit.optimization import QuadraticProgram \
+        as QuadraticProgram_
+
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
+from qiskit_optimization.problems.quadratic_program import QuadraticProgram
+
 
 from dwave.plugins.qiskit import DWaveMinimumEigensolver
 from dwave.system import AutoEmbeddingComposite, DWaveSampler
-from qiskit_optimization.problems.quadratic_program import QuadraticProgram
 
 from utilities.custom_args_sampler import CustomArgsSampler
 
@@ -45,12 +56,15 @@ def create_dwave_meo(sampler: DWaveSampler = None,
         MinimumEigenOptimizer: Optimizer with DWaveMinimumEigensolver.
 
     """
-    if sampler is None:
-        sampler = AutoEmbeddingComposite(DWaveSampler())
-    custom_sampler = CustomArgsSampler(sampler, sample_kwargs=sample_kwargs)
-    dwave_solver = DWaveMinimumEigensolver(sampler=custom_sampler)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        if sampler is None:
+            sampler = AutoEmbeddingComposite(DWaveSampler())
+        custom_sampler = CustomArgsSampler(
+            sampler, sample_kwargs=sample_kwargs)
+        dwave_solver = DWaveMinimumEigensolver(sampler=custom_sampler)
 
-    return MinimumEigenOptimizer_(dwave_solver, penalty=penalty)
+        return MinimumEigenOptimizer_(dwave_solver, penalty=penalty)
 
 
 def create_qaoa_meo(backend: Backend = None,
@@ -94,8 +108,10 @@ def cplex_varname(k, j: int) -> str:
         name = 'x' + str(k) + "_" + str(j)
     return name
 
- def create_quadratic_programs_from_paths(
-        path: 'Union[list[str],str]') -> Dict[str, QuadraticProgram]:
+
+def create_quadratic_programs_from_paths(
+        path: 'Union[list[str],str]',
+        legacy: bool = False) -> dict:
     """Create quadratic program instances from cplex model files.
 
     Args:
@@ -116,15 +132,17 @@ def cplex_varname(k, j: int) -> str:
 
         for file in filenames:
             name, _ = os.path.splitext(file)
-            qp = QuadraticProgram()
-            qp.read_from_lp_file(path_+file)
-            qps[name] = qp
+            if legacy:
+                qubo = QuadraticProgram_()
+            else:
+                qubo = QuadraticProgram()
+            qubo.read_from_lp_file(path_+file)
+            qps[name] = qubo
 
     qps_sorted = OrderedDict()
 
     for qp_name in sorted(qps.keys(),
-                          key=lambda name: qps[name].get_num_vars()()):
+                          key=lambda name: qps[name].get_num_vars()):
         qps_sorted[qp_name] = qps[qp_name]
 
     return qps_sorted
-

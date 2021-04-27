@@ -36,18 +36,17 @@ class RandomQubo(QuadraticProgram):
     Choose random Q and c multiple times to create sparse problems with clear structure.
     """
 
-    def __init__(self, num_constr: int, num_vars: int,
+    def __init__(self, num_vars: int,
                  name: str, multiple: int = 1, *,
                  boundaries: Optional[RQuboBoundaries] = None):
         """
         Create an instance of RandomQubo with specified boundaries.
 
         Args:
-            num_constr (int): Number of Constraints.
             num_vars (int): Number of Variables.
             name (str): Name of Quadratic Program.
             multiple (int, optional): Create mutiple unconnected parts with
-                num_constr and num_vars each.
+                num_vars variables each.
             boundaries (Optional[dict], optional):
                 Dictionary with bounds as follows. Defaults to None.
                 "Q" : Lower and upper bound for objective matrix Q.
@@ -55,35 +54,34 @@ class RandomQubo(QuadraticProgram):
 
         """
         super().__init__(name)
-        self._dim = (num_constr, num_vars)
-        self.multiple = multiple
+        self._num_vars = num_vars
+        self._multiple = multiple
         if boundaries is not None:
             self._populate_random(boundaries)
 
     def _populate_random(self, boundaries):
         linear_objective = np.array([])
         quadratic_objective = {}
-        _, num_vars = self._dim
-        for k in range(self.multiple):
-            self._add_vars(num_vars, k)
+        for k in range(self._multiple):
+            self._add_vars(k)
             quadratic_objective.update(
-                self._create_quadratic_data(k, num_vars, boundaries))
+                self._create_quadratic_data(k, boundaries))
 
             vec_c = self._create_linear_data(boundaries)
             linear_objective = np.append(linear_objective, vec_c)
 
         self.minimize(linear=linear_objective, quadratic=quadratic_objective)
 
-    def _create_quadratic_data(self, k: int, num_vars: int,
+    def _create_quadratic_data(self, k: int,
                                boundaries: dict) -> Dict[Tuple[str, str], int]:
         """Create random quadratic data Q."""
         #  pylint: disable=invalid-name
         matrix_q_lb, matrix_q_ub = boundaries["Q"]
-        n = num_vars
+        n = self._num_vars
         quadratic = {}
         Q = np.random.randint(matrix_q_lb, matrix_q_ub+1, size=(n, n))
-        for i in range(num_vars):
-            for j in range(i, num_vars):
+        for i in range(n):
+            for j in range(i, n):
                 var_i = cplex_varname(k, i)
                 if i == j:
                     quadratic[var_i, var_i] = Q[i, i]
@@ -97,18 +95,16 @@ class RandomQubo(QuadraticProgram):
         """Create random linear data A, b and c."""
         #  pylint: disable=invalid-name
         c_lb, c_ub = boundaries["c"]
-        _, n = self._dim
-        c = np.random.randint(c_lb, c_ub+1, size=n)
+        c = np.random.randint(c_lb, c_ub+1, size=self._num_vars)
         return c
 
-    def _add_vars(self, num_vars: int, var_k: int):
+    def _add_vars(self, var_k: int):
         """Add variables to CPLEX model."""
-        for j in range(num_vars):
+        for j in range(self._num_vars):
             self.binary_var(cplex_varname(var_k, j))
 
     @classmethod
-    def create_random_qubo(cls, name: str,
-                           num_constr: int, num_vars: int, *,
+    def create_random_qubo(cls, name: str, num_vars: int, *,
                            multiple: int = 1,
                            matrix_q_lb: int = -1,
                            matrix_q_ub: int = 1,
@@ -117,10 +113,9 @@ class RandomQubo(QuadraticProgram):
         Create an instance of RandomQubo with specified and/or default bounds.
         Args:
             name (str): Name of binary Program..
-            num_constr (int): Number of Constraints..
             num_vars (int): Number of Variables.
             multiple (int, optional): Create mutiple unconnected parts with
-            num_constr and num_vars each. Defaults to 1.
+            num_vars each. Defaults to 1.
             matrix_q_lb (int, optional): Lower bound for objective matrix Q.
                 Defaults to -1.
             matrix_q_ub (int, optional): Upper bound for objective matrix Q.
@@ -136,5 +131,5 @@ class RandomQubo(QuadraticProgram):
         boundaries = {"Q": (matrix_q_lb, matrix_q_ub),
                       "c": (c_lb, c_ub)}
         return RandomQubo(
-            num_constr, num_vars, name, multiple,
+            num_vars, name, multiple,
             boundaries=boundaries)

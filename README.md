@@ -1,5 +1,16 @@
 # compare-qiskit-ocean
-I try to find my way into quantum computing by a comparison of ocean and qiskit framework. In particular, I will test Linear and Quadratic Programs.
+I try to find my way into quantum computing by a comparison of ocean and qiskit framework. In particular, I will test Linear and Quadratic Programs. 
+
+Results of so far done tests are summarized below. It is obvious, that D-Wave solvers outperform current gate model QPUs.
+There are multiple Jupyter Notebooks which show embedding on D-Wave systems as well as graph visuals.
+For Qiskit, topologies of real IBM Q devices as well as QAOA circuits and outcomes on these devices are included.
+
+The class RandomQubo constructs qubos of the form:
+min 1/2 x Q x + cx 
+x is a binary and c an integer vector of size n.
+Q is an integer matrix of size n x n.
+
+More complex problems can be constructed as follows:
 
 In random_lp package is a class RandomQP which is used to test QAOA on IBMQ and Quantum Annealing on DWave Leap.
 The class constructs quadratic programs of the form:
@@ -25,7 +36,22 @@ comparison/Qiskit/LinearProgramming/QAOA/
 comparison/Ocean/LinearProgramming/DWave_Qiskit_Plugin_Test/
 
 Results:
-For complete logs and output see RESULTS folders.
+For complete logs and output see RESULTS folders in the according subdirs.
+
+Random Qubo
+    Dense
+
+        CPLEX classical optimizer needs a long time to optimize large problems with 90 or 100 vars
+
+        DWave pure quantum with 100 qubits and clique embedding almost optimal
+
+        QAOA noise model Mumbai simulation up to 12 qubits optimal, up to 27 qubits done
+    
+    Sparse
+
+        DWave pure quantum with 525 qubits and auto embedding found almost optimal solution
+
+        QAOA noise model Mumbai simulation up to 12 qubits successful but not optimal
 
 Random LP
     Dense
@@ -34,14 +60,14 @@ Random LP
         Dwave Hybrid up to 218 qubits found solution but not optimal
         DWave pure quantum with 29 qubits and clique embedding near optimal
 
-        QAOA up to 22 qubits near optimal
+        QAOA noise free simulation up to 22 qubits near optimal
     
     Sparse
 
         Dwave Hybrid up to 217 qubits with non optimal solutions
         DWave pure quantum with 100 qubits and auto embedding found solution but not optimal
 
-        QAOA up to 
+        QAOA noise free simulation up to
 
 Random QP
     Dense
@@ -53,14 +79,14 @@ Random QP
         DWave pure quantum with 25 qubits and clique embedding near optimal
         DWave pure quantum with 36 qubits and auto embedding found solution but not optimal
 
-        QAOA up to 17 qubits near optimal
+        QAOA noise free simulation up to 17 qubits near optimal
     
     Sparse
 
         Dwave Hybrid up to  qubits with non optimal solutions
         DWave pure quantum with  qubits and auto embedding found solution but not optimal
 
-        QAOA up to 13 qubits optimal
+        QAOA noise free simulation up to 13 qubits optimal
         QAOA up to 17 qubits near optimal
 
 

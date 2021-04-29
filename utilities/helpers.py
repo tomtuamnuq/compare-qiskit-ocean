@@ -4,16 +4,30 @@ Created on Sun Jan 31 11:07:42 2021.
 @author: tom
 """
 
-from typing import Optional
+import os
+import warnings
+import numpy as np
+from typing import Callable, Dict, Optional, Union
+from collections import OrderedDict
 
-from qiskit.optimization.algorithms import MinimumEigenOptimizer \
-    as MinimumEigenOptimizer_  # deprecated
 from qiskit import BasicAer
 from qiskit.providers.backend import Backend
 from qiskit.utils import QuantumInstance, algorithm_globals
 from qiskit.algorithms import QAOA
 from qiskit.algorithms.optimizers import COBYLA
+
+with warnings.catch_warnings():
+    # Since Aqua is deprecated but dwave_qiskit_plugin is not updated
+    # we ignore DeprecationWarnings.
+    warnings.filterwarnings("ignore", category=DeprecationWarning)
+    from qiskit.optimization.algorithms import MinimumEigenOptimizer \
+        as MinimumEigenOptimizer_  # deprecated
+    from qiskit.optimization import QuadraticProgram \
+        as QuadraticProgram_
+
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
+from qiskit_optimization.problems.quadratic_program import QuadraticProgram
+
 
 from dwave.plugins.qiskit import DWaveMinimumEigensolver
 from dwave.system import AutoEmbeddingComposite, DWaveSampler
@@ -42,18 +56,24 @@ def create_dwave_meo(sampler: DWaveSampler = None,
         MinimumEigenOptimizer: Optimizer with DWaveMinimumEigensolver.
 
     """
-    if sampler is None:
-        sampler = AutoEmbeddingComposite(DWaveSampler())
-    custom_sampler = CustomArgsSampler(sampler, sample_kwargs=sample_kwargs)
-    dwave_solver = DWaveMinimumEigensolver(sampler=custom_sampler)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        if sampler is None:
+            sampler = AutoEmbeddingComposite(DWaveSampler())
+        custom_sampler = CustomArgsSampler(
+            sampler, sample_kwargs=sample_kwargs)
+        dwave_solver = DWaveMinimumEigensolver(sampler=custom_sampler)
 
-    return MinimumEigenOptimizer_(dwave_solver, penalty=penalty)
+        return MinimumEigenOptimizer_(dwave_solver, penalty=penalty)
 
 
 def create_qaoa_meo(backend: Backend = None,
                     penalty: Optional[float] = None,
                     q_seed: int = 10598,
-                    shots: int = 4096) -> MinimumEigenOptimizer:
+                    max_iter: int = 20,
+                    qaoa_callback: Optional[Callable[[
+                        int, np.ndarray, float, float], None]] = None,
+                    **sample_kwargs) -> MinimumEigenOptimizer:
     """
     Create a qaoa minimum eigen optimizer with.
 
@@ -62,23 +82,27 @@ def create_qaoa_meo(backend: Backend = None,
             Defaults to None. In this case qasm simulator is used.
         penalty (Optional[int], optional): Set penalty in
            MinimumEigensolver. Defaults to None.
-        q_seed (int): Set quantum seed in aqua and quantum instance.
+        q_seed (int): Set quantum seed global and in quantum instance.
             Defaults to 10598(as used in most issues).
-        shots (int): Set number of circuit exectutions in quantum instance.
-            Defaults to 4096
+        max_iter (int): Maximum number of iterations in classical
+            optimizer. Defaults to 20.
+        **sample_kwargs:
+            Optional keyword arguments for the QuantumInstance.
 
     Returns:
         MinimumEigenOptimizer: Optimizer with QAOA mes.
     """
     algorithm_globals.random_seed = q_seed
-    optimizer = COBYLA()
+    optimizer = COBYLA(maxiter=max_iter)
+
     if backend is None:
         backend = BasicAer.get_backend('qasm_simulator')
     quantum_instance = QuantumInstance(backend,
                                        seed_simulator=q_seed,
                                        seed_transpiler=q_seed,
-                                       shots=shots)
-    qaoa_mes = QAOA(quantum_instance=quantum_instance, optimizer=optimizer)
+                                       **sample_kwargs)
+    qaoa_mes = QAOA(quantum_instance=quantum_instance,
+                    optimizer=optimizer, callback=qaoa_callback)
 
     return MinimumEigenOptimizer(qaoa_mes, penalty=penalty)
 
@@ -90,3 +114,42 @@ def cplex_varname(k, j: int) -> str:
     else:
         name = 'x' + str(k) + "_" + str(j)
     return name
+
+
+def create_quadratic_programs_from_paths(
+        path: 'Union[list[str],str]',
+        legacy: bool = False) -> dict:
+    """Create quadratic program instances from cplex model files.
+
+    Args:
+        path (str): File link or links to read all models from.
+
+    Returns:
+        qps_sorted (OrderedDict): A dict with QuadraticProgram instances
+         ordered by number of variables.
+
+    """
+    if isinstance(path, str):
+        paths = [path]
+    else:
+        paths = path
+    qps = {}
+    for path_ in paths:
+        _, _, filenames = next(os.walk(path_))
+
+        for file in filenames:
+            name, _ = os.path.splitext(file)
+            if legacy:
+                qubo = QuadraticProgram_()
+            else:
+                qubo = QuadraticProgram()
+            qubo.read_from_lp_file(path_+file)
+            qps[name] = qubo
+
+    qps_sorted = OrderedDict()
+
+    for qp_name in sorted(qps.keys(),
+                          key=lambda name: qps[name].get_num_vars()):
+        qps_sorted[qp_name] = qps[qp_name]
+
+    return qps_sorted

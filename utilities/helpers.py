@@ -6,9 +6,9 @@ Created on Sun Jan 31 11:07:42 2021.
 
 import os
 import warnings
-import numpy as np
-from typing import Callable, Dict, Optional, Union
+from typing import Callable, Optional, Union
 from collections import OrderedDict
+import numpy as np
 
 from qiskit import BasicAer
 from qiskit.providers.backend import Backend

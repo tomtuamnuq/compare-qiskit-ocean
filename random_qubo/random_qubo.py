@@ -29,8 +29,8 @@ class RandomQubo(QuadraticProgram):
     Problem:
     :math:`
         \\underset{x}{\\min}\\quad \\frac{1}{2} x^T Q x + c^T x \\
-         Q \\in \\mathbb{Z}^{n\\times n}\\
-         x,c \\in \\mathbb{Z}^{n}\\
+         Q \\in \\mathbb{Z}^{n\\times n}, c \\in \\mathbb{Z}^{n} \\
+         x \\in \\mathbb{F}^{n}\\
     `
     The random instance is constructed as follows:
     Choose random Q and c multiple times to create sparse problems with clear structure.

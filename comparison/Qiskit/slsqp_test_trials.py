@@ -1,4 +1,3 @@
-
 from qiskit_optimization.algorithms import SlsqpOptimizer
 from qiskit_optimization import QuadraticProgram
 

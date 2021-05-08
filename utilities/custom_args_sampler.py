@@ -30,9 +30,8 @@ class CustomArgsSampler(ComposedSampler):
 
     @property
     def properties(self):
-        """dict: A dict containing any additional information about the sampler.
-        """
-        return {'child_properties': self.child.properties.copy()}
+        """dict: A dict containing any additional information about the sampler."""
+        return {"child_properties": self.child.properties.copy()}
 
     def sample(self, bqm, **kwargs):
         """Sample from a binary quadratic model by invoking sampling method with custom args.
@@ -57,4 +56,4 @@ class CustomArgsSampler(ComposedSampler):
         Args:
             label (str): Problem label to be used in :meth:`.sample`.
         """
-        self._sample_kwargs['label'] = label
+        self._sample_kwargs["label"] = label

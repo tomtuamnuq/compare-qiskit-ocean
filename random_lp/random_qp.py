@@ -43,10 +43,16 @@ class RandomQuadraticProgram(QuadraticProgram):
     Set b = Ax.
     """
 
-    def __init__(self, num_constr: int, num_vars: int,
-                 name: str, multiple: int = 1, *,
-                 penalty: Optional[float] = None,
-                 boundaries: Optional[RQPBoundaries] = None):
+    def __init__(
+        self,
+        num_constr: int,
+        num_vars: int,
+        name: str,
+        multiple: int = 1,
+        *,
+        penalty: Optional[float] = None,
+        boundaries: Optional[RQPBoundaries] = None,
+    ):
         """
         Create an instance of RandomQuadraticProgram with specified boundaries.
 
@@ -81,8 +87,7 @@ class RandomQuadraticProgram(QuadraticProgram):
         _, num_vars = self._dim
         for k in range(self.multiple):
             self._add_vars(num_vars, lower_bound, upper_bound, k)
-            quadratic_objective.update(
-                self._create_quadratic_data(k, num_vars, boundaries))
+            quadratic_objective.update(self._create_quadratic_data(k, num_vars, boundaries))
 
             matrix_a, vec_b, vec_c = self._create_linear_data(boundaries)
             linear_objective = np.append(linear_objective, vec_c)
@@ -90,14 +95,15 @@ class RandomQuadraticProgram(QuadraticProgram):
         self.minimize(linear=linear_objective, quadratic=quadratic_objective)
         self._qubo = self._conv.convert(self)
 
-    def _create_quadratic_data(self, k: int, num_vars: int,
-                               boundaries: dict) -> Dict[Tuple[str, str], int]:
+    def _create_quadratic_data(
+        self, k: int, num_vars: int, boundaries: dict
+    ) -> Dict[Tuple[str, str], int]:
         """Create random quadratic data Q."""
         #  pylint: disable=invalid-name
         matrix_q_lb, matrix_q_ub = boundaries["Q"]
         n = num_vars
         quadratic = {}
-        Q = np.random.randint(matrix_q_lb, matrix_q_ub+1, size=(n, n))
+        Q = np.random.randint(matrix_q_lb, matrix_q_ub + 1, size=(n, n))
         for i in range(num_vars):
             for j in range(i, num_vars):
                 var_i = cplex_varname(k, i)
@@ -108,30 +114,28 @@ class RandomQuadraticProgram(QuadraticProgram):
                     quadratic[var_i, var_j] = Q[i, j] + Q[j, i]
         return quadratic
 
-    def _create_linear_data(self, boundaries: dict) -> Tuple[np.ndarray,
-                                                             np.ndarray, np.ndarray]:
+    def _create_linear_data(self, boundaries: dict) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Create random linear data A, b and c."""
         #  pylint: disable=invalid-name
         lower_bound, upper_bound = boundaries["x"]
         matrix_a_lb, matrix_a_ub = boundaries["A"]
         c_lb, c_ub = boundaries["c"]
         m, n = self._dim
-        x = np.random.randint(lower_bound, upper_bound+1, size=n)
-        A = np.random.randint(matrix_a_lb, matrix_a_ub+1, size=(m, n))
+        x = np.random.randint(lower_bound, upper_bound + 1, size=n)
+        A = np.random.randint(matrix_a_lb, matrix_a_ub + 1, size=(m, n))
         b = A.dot(x)
-        c = np.random.randint(c_lb, c_ub+1, size=n)
+        c = np.random.randint(c_lb, c_ub + 1, size=n)
         return A, b, c
 
-    def _add_vars(self, num_vars: int, lower_bound: int, upper_bound: int,
-                  var_k: int):
+    def _add_vars(self, num_vars: int, lower_bound: int, upper_bound: int, var_k: int):
         """Add variables to CPLEX model."""
         for j in range(num_vars):
             if lower_bound == 0 and upper_bound == 1:
                 self.binary_var(cplex_varname(var_k, j))
             else:
-                self.integer_var(lowerbound=lower_bound,
-                                 upperbound=upper_bound,
-                                 name=cplex_varname(var_k, j))
+                self.integer_var(
+                    lowerbound=lower_bound, upperbound=upper_bound, name=cplex_varname(var_k, j)
+                )
 
     def _add_constrs(self, k: int, matrix_a: np.ndarray, vec_b: np.ndarray):
         """Add linear constraints to CPLEX model."""
@@ -140,9 +144,9 @@ class RandomQuadraticProgram(QuadraticProgram):
             linear = {}
             for j in range(n):
                 linear[cplex_varname(k, j)] = matrix_a[i, j]
-            self.linear_constraint(linear=linear, sense='==',
-                                   rhs=vec_b[i],
-                                   name='A'+str(k)+"_eq_"+'b'+str(i))
+            self.linear_constraint(
+                linear=linear, sense="==", rhs=vec_b[i], name="A" + str(k) + "_eq_" + "b" + str(i)
+            )
 
     @property
     def qubo(self) -> QuadraticProgram:
@@ -199,8 +203,9 @@ class RandomQuadraticProgram(QuadraticProgram):
         self.multiple = 1
 
     @classmethod
-    def create_from_lp_file(cls, filename: str,
-                            penalty: Optional[float] = None) -> 'RandomQuadraticProgram':
+    def create_from_lp_file(
+        cls, filename: str, penalty: Optional[float] = None
+    ) -> "RandomQuadraticProgram":
         """
         Create an instance of RandomQuadraticProgram by invoking from_docplex(model).
 
@@ -214,21 +219,28 @@ class RandomQuadraticProgram(QuadraticProgram):
             random_qp (RandomQuadraticProgram): RandomQuadraticProgram  model.
 
         """
-        rqp = RandomQuadraticProgram(
-            1, 1, "", penalty=penalty)  # set in from_docplex(model)
+        rqp = RandomQuadraticProgram(1, 1, "", penalty=penalty)  # set in from_docplex(model)
         rqp.read_from_lp_file(filename)  # calls from_docplex
         return rqp
 
     @classmethod
     def create_random_qp(
-            cls,
-            name: str, num_constr: int, num_vars: int, *,
-            penalty: Optional[float] = None,
-            lower_bound: int, upper_bound: int,
-            multiple: int = 1,
-            matrix_a_lb: int = -5, matrix_a_ub: int = 5,
-            matrix_q_lb: int = -2, matrix_q_ub: int = 2,
-            c_lb: int = -1, c_ub: int = 1) -> 'RandomQuadraticProgram':
+        cls,
+        name: str,
+        num_constr: int,
+        num_vars: int,
+        *,
+        penalty: Optional[float] = None,
+        lower_bound: int,
+        upper_bound: int,
+        multiple: int = 1,
+        matrix_a_lb: int = -5,
+        matrix_a_ub: int = 5,
+        matrix_q_lb: int = -2,
+        matrix_q_ub: int = 2,
+        c_lb: int = -1,
+        c_ub: int = 1,
+    ) -> "RandomQuadraticProgram":
         """
         Create an instance of RandomQuadraticProgram with specified and/or default bounds.
 
@@ -259,25 +271,32 @@ class RandomQuadraticProgram(QuadraticProgram):
             RandomQuadraticProgram: An instance of a randomly constructed quadratic program.
 
         """
-        boundaries = {"x": (lower_bound, upper_bound),
-                      "A": (matrix_a_lb, matrix_a_ub),
-                      "Q": (matrix_q_lb, matrix_q_ub),
-                      "c": (c_lb, c_ub)}
+        boundaries = {
+            "x": (lower_bound, upper_bound),
+            "A": (matrix_a_lb, matrix_a_ub),
+            "Q": (matrix_q_lb, matrix_q_ub),
+            "c": (c_lb, c_ub),
+        }
         return RandomQuadraticProgram(
-            num_constr, num_vars, name, multiple,
-            penalty=penalty,
-            boundaries=boundaries)
+            num_constr, num_vars, name, multiple, penalty=penalty, boundaries=boundaries
+        )
 
     @classmethod
-    def create_random_binary_prog(cls, name: str,
-                                  num_constr: int, num_vars: int, *,
-                                  penalty: Optional[float] = None,
-                                  multiple: int = 1,
-                                  matrix_a_lb: int = -1,
-                                  matrix_a_ub: int = 1,
-                                  matrix_q_lb: int = -1,
-                                  matrix_q_ub: int = 1,
-                                  c_lb: int = -1, c_ub: int = 1) -> 'RandomQuadraticProgram':
+    def create_random_binary_prog(
+        cls,
+        name: str,
+        num_constr: int,
+        num_vars: int,
+        *,
+        penalty: Optional[float] = None,
+        multiple: int = 1,
+        matrix_a_lb: int = -1,
+        matrix_a_ub: int = 1,
+        matrix_q_lb: int = -1,
+        matrix_q_ub: int = 1,
+        c_lb: int = -1,
+        c_ub: int = 1,
+    ) -> "RandomQuadraticProgram":
         """
         Create a random binary quadratic program by calling create_random_qp.
 
@@ -305,12 +324,18 @@ class RandomQuadraticProgram(QuadraticProgram):
             RandomQuadraticProgram: An instance of a randomly constructed binary program.
 
         """
-        return cls.create_random_qp(name, num_constr, num_vars,
-                                    lower_bound=0, upper_bound=1,
-                                    multiple=multiple,
-                                    penalty=penalty,
-                                    matrix_a_lb=matrix_a_lb,
-                                    matrix_a_ub=matrix_a_ub,
-                                    matrix_q_lb=matrix_q_lb,
-                                    matrix_q_ub=matrix_q_ub,
-                                    c_lb=c_lb, c_ub=c_ub)
+        return cls.create_random_qp(
+            name,
+            num_constr,
+            num_vars,
+            lower_bound=0,
+            upper_bound=1,
+            multiple=multiple,
+            penalty=penalty,
+            matrix_a_lb=matrix_a_lb,
+            matrix_a_ub=matrix_a_ub,
+            matrix_q_lb=matrix_q_lb,
+            matrix_q_ub=matrix_q_ub,
+            c_lb=c_lb,
+            c_ub=c_ub,
+        )

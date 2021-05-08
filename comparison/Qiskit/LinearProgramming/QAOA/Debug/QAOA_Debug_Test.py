@@ -27,11 +27,10 @@ cplex = CplexOptimizer()
 print(cplex.solve(qp))
 
 # solve qp with Minimum Eigen Optimizer QAOA
-backend = BasicAer.get_backend('qasm_simulator')
-quantum_instance = QuantumInstance(backend,
-                                   seed_simulator=Q_SEED,
-                                   seed_transpiler=Q_SEED,
-                                   shots=shots)
+backend = BasicAer.get_backend("qasm_simulator")
+quantum_instance = QuantumInstance(
+    backend, seed_simulator=Q_SEED, seed_transpiler=Q_SEED, shots=shots
+)
 
 # QAOA
 qaoa_mes = QAOA(quantum_instance=quantum_instance, optimizer=optimizer)

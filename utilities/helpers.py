@@ -20,10 +20,10 @@ with warnings.catch_warnings():
     # Since Aqua is deprecated but dwave_qiskit_plugin is not updated
     # we ignore DeprecationWarnings.
     warnings.filterwarnings("ignore", category=DeprecationWarning)
-    from qiskit.optimization.algorithms import MinimumEigenOptimizer \
-        as MinimumEigenOptimizer_  # deprecated
-    from qiskit.optimization import QuadraticProgram \
-        as QuadraticProgram_
+    from qiskit.optimization.algorithms import (
+        MinimumEigenOptimizer as MinimumEigenOptimizer_,
+    )  # deprecated
+    from qiskit.optimization import QuadraticProgram as QuadraticProgram_
 
 from qiskit_optimization.algorithms import MinimumEigenOptimizer
 from qiskit_optimization.problems.quadratic_program import QuadraticProgram
@@ -35,9 +35,9 @@ from dwave.system import AutoEmbeddingComposite, DWaveSampler
 from utilities.custom_args_sampler import CustomArgsSampler
 
 
-def create_dwave_meo(sampler: DWaveSampler = None,
-                     penalty: Optional[float] = None,
-                     **sample_kwargs) -> MinimumEigenOptimizer_:
+def create_dwave_meo(
+    sampler: DWaveSampler = None, penalty: Optional[float] = None, **sample_kwargs
+) -> MinimumEigenOptimizer_:
     """
     Create a dwave minimum eigen optimizer with a CustomArgsSampler.
 
@@ -60,20 +60,20 @@ def create_dwave_meo(sampler: DWaveSampler = None,
         warnings.filterwarnings("ignore", category=DeprecationWarning)
         if sampler is None:
             sampler = AutoEmbeddingComposite(DWaveSampler())
-        custom_sampler = CustomArgsSampler(
-            sampler, sample_kwargs=sample_kwargs)
+        custom_sampler = CustomArgsSampler(sampler, sample_kwargs=sample_kwargs)
         dwave_solver = DWaveMinimumEigensolver(sampler=custom_sampler)
 
         return MinimumEigenOptimizer_(dwave_solver, penalty=penalty)
 
 
-def create_qaoa_meo(backend: Backend = None,
-                    penalty: Optional[float] = None,
-                    q_seed: int = 10598,
-                    max_iter: int = 20,
-                    qaoa_callback: Optional[Callable[[
-                        int, np.ndarray, float, float], None]] = None,
-                    **sample_kwargs) -> MinimumEigenOptimizer:
+def create_qaoa_meo(
+    backend: Backend = None,
+    penalty: Optional[float] = None,
+    q_seed: int = 10598,
+    max_iter: int = 20,
+    qaoa_callback: Optional[Callable[[int, np.ndarray, float, float], None]] = None,
+    **sample_kwargs,
+) -> MinimumEigenOptimizer:
     """
     Create a qaoa minimum eigen optimizer with.
 
@@ -96,13 +96,11 @@ def create_qaoa_meo(backend: Backend = None,
     optimizer = COBYLA(maxiter=max_iter)
 
     if backend is None:
-        backend = BasicAer.get_backend('qasm_simulator')
-    quantum_instance = QuantumInstance(backend,
-                                       seed_simulator=q_seed,
-                                       seed_transpiler=q_seed,
-                                       **sample_kwargs)
-    qaoa_mes = QAOA(quantum_instance=quantum_instance,
-                    optimizer=optimizer, callback=qaoa_callback)
+        backend = BasicAer.get_backend("qasm_simulator")
+    quantum_instance = QuantumInstance(
+        backend, seed_simulator=q_seed, seed_transpiler=q_seed, **sample_kwargs
+    )
+    qaoa_mes = QAOA(quantum_instance=quantum_instance, optimizer=optimizer, callback=qaoa_callback)
 
     return MinimumEigenOptimizer(qaoa_mes, penalty=penalty)
 
@@ -110,15 +108,15 @@ def create_qaoa_meo(backend: Backend = None,
 def cplex_varname(k, j: int) -> str:
     """Return name for quadratic program variable to meet CLPEX conventions."""
     if k == 0:
-        name = 'x' + "_" + str(j)
+        name = "x" + "_" + str(j)
     else:
-        name = 'x' + str(k) + "_" + str(j)
+        name = "x" + str(k) + "_" + str(j)
     return name
 
 
 def create_quadratic_programs_from_paths(
-        path: 'Union[list[str],str]',
-        legacy: bool = False) -> dict:
+    path: "Union[list[str],str]", legacy: bool = False
+) -> dict:
     """Create quadratic program instances from cplex model files.
 
     Args:
@@ -143,13 +141,12 @@ def create_quadratic_programs_from_paths(
                 qubo = QuadraticProgram_()
             else:
                 qubo = QuadraticProgram()
-            qubo.read_from_lp_file(path_+file)
+            qubo.read_from_lp_file(path_ + file)
             qps[name] = qubo
 
     qps_sorted = OrderedDict()
 
-    for qp_name in sorted(qps.keys(),
-                          key=lambda name: qps[name].get_num_vars()):
+    for qp_name in sorted(qps.keys(), key=lambda name: qps[name].get_num_vars()):
         qps_sorted[qp_name] = qps[qp_name]
 
     return qps_sorted

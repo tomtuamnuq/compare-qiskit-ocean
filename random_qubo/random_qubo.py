@@ -13,9 +13,8 @@ from utilities.helpers import cplex_varname
 
 
 class RQuboBoundaries(TypedDict):
-    """Boundary dict typing class for RandomQubo instances.
+    """Boundary dict typing class for RandomQubo instances."""
 
-    """
     Q: Tuple[int, int]
     c: Tuple[int, int]
 
@@ -36,9 +35,14 @@ class RandomQubo(QuadraticProgram):
     Choose random Q and c multiple times to create sparse problems with clear structure.
     """
 
-    def __init__(self, num_vars: int,
-                 name: str, multiple: int = 1, *,
-                 boundaries: Optional[RQuboBoundaries] = None):
+    def __init__(
+        self,
+        num_vars: int,
+        name: str,
+        multiple: int = 1,
+        *,
+        boundaries: Optional[RQuboBoundaries] = None,
+    ):
         """
         Create an instance of RandomQubo with specified boundaries.
 
@@ -64,22 +68,20 @@ class RandomQubo(QuadraticProgram):
         quadratic_objective = {}
         for k in range(self._multiple):
             self._add_vars(k)
-            quadratic_objective.update(
-                self._create_quadratic_data(k, boundaries))
+            quadratic_objective.update(self._create_quadratic_data(k, boundaries))
 
             vec_c = self._create_linear_data(boundaries)
             linear_objective = np.append(linear_objective, vec_c)
 
         self.minimize(linear=linear_objective, quadratic=quadratic_objective)
 
-    def _create_quadratic_data(self, k: int,
-                               boundaries: dict) -> Dict[Tuple[str, str], int]:
+    def _create_quadratic_data(self, k: int, boundaries: dict) -> Dict[Tuple[str, str], int]:
         """Create random quadratic data Q."""
         #  pylint: disable=invalid-name
         matrix_q_lb, matrix_q_ub = boundaries["Q"]
         n = self._num_vars
         quadratic = {}
-        Q = np.random.randint(matrix_q_lb, matrix_q_ub+1, size=(n, n))
+        Q = np.random.randint(matrix_q_lb, matrix_q_ub + 1, size=(n, n))
         for i in range(n):
             for j in range(i, n):
                 var_i = cplex_varname(k, i)
@@ -90,12 +92,11 @@ class RandomQubo(QuadraticProgram):
                     quadratic[var_i, var_j] = Q[i, j] + Q[j, i]
         return quadratic
 
-    def _create_linear_data(self, boundaries: dict) -> Tuple[np.ndarray,
-                                                             np.ndarray, np.ndarray]:
+    def _create_linear_data(self, boundaries: dict) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Create random linear data A, b and c."""
         #  pylint: disable=invalid-name
         c_lb, c_ub = boundaries["c"]
-        c = np.random.randint(c_lb, c_ub+1, size=self._num_vars)
+        c = np.random.randint(c_lb, c_ub + 1, size=self._num_vars)
         return c
 
     def _add_vars(self, var_k: int):
@@ -104,11 +105,17 @@ class RandomQubo(QuadraticProgram):
             self.binary_var(cplex_varname(var_k, j))
 
     @classmethod
-    def create_random_qubo(cls, name: str, num_vars: int, *,
-                           multiple: int = 1,
-                           matrix_q_lb: int = -1,
-                           matrix_q_ub: int = 1,
-                           c_lb: int = -1, c_ub: int = 1) -> 'RandomQubo':
+    def create_random_qubo(
+        cls,
+        name: str,
+        num_vars: int,
+        *,
+        multiple: int = 1,
+        matrix_q_lb: int = -1,
+        matrix_q_ub: int = 1,
+        c_lb: int = -1,
+        c_ub: int = 1,
+    ) -> "RandomQubo":
         """
         Create an instance of RandomQubo with specified and/or default bounds.
         Args:
@@ -128,8 +135,5 @@ class RandomQubo(QuadraticProgram):
             RandomQubo: An instance of RandomQubo.
 
         """
-        boundaries = {"Q": (matrix_q_lb, matrix_q_ub),
-                      "c": (c_lb, c_ub)}
-        return RandomQubo(
-            num_vars, name, multiple,
-            boundaries=boundaries)
+        boundaries = {"Q": (matrix_q_lb, matrix_q_ub), "c": (c_lb, c_ub)}
+        return RandomQubo(num_vars, name, multiple, boundaries=boundaries)

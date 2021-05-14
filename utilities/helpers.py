@@ -75,7 +75,7 @@ def create_qaoa_meo(
     **sample_kwargs,
 ) -> MinimumEigenOptimizer:
     """
-    Create a qaoa minimum eigen optimizer with.
+    Create a qaoa minimum eigen optimizer.
 
     Args:
         backend (Backend, optional): Backend to use.
